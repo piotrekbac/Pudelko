@@ -8,11 +8,11 @@ namespace PudelkoLibrary
     //Reprezentujący jednostki miary enum o nazwie UnitOfMeasure
     public enum UnitOfMeasure
     {
-        milimetr, 
+        milimetr,
         centimetr,
         meter
     }
-    
+
     //Klasa pudełko reprezentująca nasze trójwymiarowe pudełko 
     //Używamy sealed class aby zablkokować dziedziczenie klasy
     public sealed class PudelkoLib : IEquatable<PudelkoLib>, IEnumerable, IFormattable
@@ -26,5 +26,34 @@ namespace PudelkoLibrary
         public double A => Math.Round(a, 3);
         public double B => Math.Round(b, 3);
         public double C => Math.Round(c, 3);
+
+        //Właściwość dzięki której obliczamy objętość pudełka, zaokrągloną do 9 miejsc po przecinku
+        public double Objetosc => Math.Round(A * B * C, 9);
+
+        //Właściwość dzięki które obliczamy pole powierzchni całkowitej, zaokrągloną do 6 miejsc po przecinku
+        public double Pole => Math.Round(2 * (A * B + B * C + A * C), 6);
+
+        //Konstruktor klasy PudelkoLib przyjmujący wymiary pudełka i jednostkę miary
+        public PudelkoLib(double a = 0.1, double b = 0.1, double c = 0.1, UnitOfMeasure unit = UnitOfMeasure.meter)
+        {
+            //konwertujemy jednostki na metry
+            this.a = ConvertToMeters(a, unit);
+            this.b = ConvertToMeters(b, unit);
+            this.c = ConvertToMeters(c, unit);
+
+        }
+
+        //Prywatna metoda ConvertToMeters konwertująca jednostki na metry
+        private static double ConvertToMeters(double value, UnitOfMeasure unit)
+        {
+            return unit switch
+            {
+                UnitOfMeasure.milimetr => value / 1000,
+                UnitOfMeasure.centimetr => value / 100,
+                UnitOfMeasure.meter => value,
+                _ => throw new ArgumentException("Invalid unit of measure")
+            };
+        }
     }
 }
+
