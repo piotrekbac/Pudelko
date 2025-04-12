@@ -8,9 +8,9 @@ namespace PudelkoLibrary
     //Reprezentujący jednostki miary enum o nazwie UnitOfMeasure
     public enum UnitOfMeasure
     {
-        milimetr,
-        centimetr,
-        meter
+        milimeter,   // Milimetry
+        centimeter,  // Centymetry
+        meter        // Metry
     }
 
     //Klasa pudełko reprezentująca nasze trójwymiarowe pudełko 
@@ -41,6 +41,9 @@ namespace PudelkoLibrary
             this.b = ConvertToMeters(b, unit);
             this.c = ConvertToMeters(c, unit);
 
+
+            //walidacja poprawności wymiarów
+            WalidacjaWymiarow();
         }
 
         //Prywatna metoda ConvertToMeters konwertująca jednostki na metry
@@ -48,12 +51,21 @@ namespace PudelkoLibrary
         {
             return unit switch
             {
-                UnitOfMeasure.milimetr => value / 1000,
-                UnitOfMeasure.centimetr => value / 100,
+                UnitOfMeasure.milimeter => value / 1000,
+                UnitOfMeasure.centimeter => value / 100,
                 UnitOfMeasure.meter => value,
-                _ => throw new ArgumentException("Invalid unit of measure")
+                _ => throw new ArgumentOutOfRangeException(nameof(unit), "Nieprawidłowa jednostka miary!")
             };
         }
+
+        private void WalidacjaWymiarow()
+        {
+            if (a <= 0 || b <= 0 || c <= 0 || a > 10 || b > 10 || c > 10)
+                throw new ArgumentOutOfRangeException("Wymiary muszą być dodatnie i nie mogą przekraczać 10 metrów (10m)"); 
+            
+        }
+
+
     }
 }
 
