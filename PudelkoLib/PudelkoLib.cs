@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Globalization;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
-
 
 namespace PudelkoLibrary
 {
@@ -16,13 +14,14 @@ namespace PudelkoLibrary
     }
 
     //Klasa pudełko reprezentująca nasze trójwymiarowe pudełko 
-    //Używamy sealed class aby zablkokować dziedziczenie klasy
-    public sealed class Pudelko :  IEquatable<Pudelko>, IEnumerable ,IFormattable
+    //Używamy sealed class aby zablokować dziedziczenie klasy
+    public sealed class Pudelko : IEquatable<Pudelko>, IEnumerable, IFormattable
     {
         //Pola przechowujące wymiary pudełka w metrach 
         private readonly double a;
         private readonly double b;
         private readonly double c;
+        private readonly UnitOfMeasure originalUnit;
 
         //Teraz ustawiamy właściwości dostępu do wymiarów pudełka (zaokrąglone do trzech miejsc po przecinku)
         public double A => Math.Round(a, 3);
@@ -32,30 +31,45 @@ namespace PudelkoLibrary
         //Właściwość dzięki której obliczamy objętość pudełka, zaokrągloną do 9 miejsc po przecinku
         public double Objetosc => Math.Round(A * B * C, 9);
 
-        //Właściwość dzięki które obliczamy pole powierzchni całkowitej, zaokrągloną do 6 miejsc po przecinku
+        //Właściwość dzięki której obliczamy pole powierzchni całkowitej, zaokrągloną do 6 miejsc po przecinku
         public double Pole => Math.Round(2 * (A * B + B * C + A * C), 6);
 
         // Konstruktor klasy Pudelko przyjmujący wymiary pudełka i jednostkę miary
-        public Pudelko(double a = 0.1, double b = 0.1, double c = 0.1, UnitOfMeasure unit = UnitOfMeasure.meter)
-        {
-            // Konwertujemy jednostki na metry i zaokrąglamy odpowiednio
-            this.a = ConvertToMeters(a, unit);
-            this.b = ConvertToMeters(b, unit);
-            this.c = ConvertToMeters(c, unit);
 
-            // Walidacja poprawności wymiarów
+        // Konstruktor klasy Pudelko
+        public Pudelko(double? a = null, double? b = null, double? c = null, UnitOfMeasure unit = UnitOfMeasure.centimeter)
+        {
+            // Przechowaj oryginalną jednostkę miary
+            originalUnit = unit;
+
+            // Ustaw domyślne wartości w oparciu o jednostkę miary (10 cm w wybranej jednostce)
+            double defaultValue = unit switch
+            {
+                UnitOfMeasure.milimeter => 100,   // 10 cm w milimetrach
+                UnitOfMeasure.centimeter => 10,  // 10 cm w centymetrach
+                UnitOfMeasure.meter => 0.1,      // 10 cm w metrach
+                _ => throw new ArgumentOutOfRangeException(nameof(unit), "Nieznana jednostka miary!")
+            };
+
+            // Przypisz wartości parametrów, konwertując je na metry
+            this.a = ConvertToMeters(a ?? defaultValue, unit);
+            this.b = ConvertToMeters(b ?? defaultValue, unit);
+            this.c = ConvertToMeters(c ?? defaultValue, unit);
+
+            // Walidacja wymiarów
             WalidacjaWymiarow();
         }
-
         // Prywatna metoda ConvertToMeters konwertująca jednostki na metry
         private static double ConvertToMeters(double value, UnitOfMeasure unit)
         {
-            // Zastosowanie zaokrągleń w zależności od jednostki
+            if (value <= 0)
+                throw new ArgumentOutOfRangeException(nameof(value), "Wymiary muszą być dodatnie!");
+
             return unit switch
             {
-                UnitOfMeasure.milimeter => Math.Round(value / 1000, 3), // Zaokrąglenie do 3 miejsc po przecinku
-                UnitOfMeasure.centimeter => Math.Round(value / 100, 3), // Zaokrąglenie do 3 miejsc po przecinku
-                UnitOfMeasure.meter => Math.Round(value, 3), // Zaokrąglenie do 3 miejsc po przecinku (dla spójności)
+                UnitOfMeasure.milimeter => value / 1000,   // Milimetry na metry
+                UnitOfMeasure.centimeter => value / 100,  // Centymetry na metry
+                UnitOfMeasure.meter => value,             // Metry bez zmian
                 _ => throw new ArgumentOutOfRangeException(nameof(unit), "Nieprawidłowa jednostka miary!")
             };
         }
@@ -68,59 +82,57 @@ namespace PudelkoLibrary
                 throw new ArgumentOutOfRangeException("Wymiary muszą być dodatnie i nie mogą przekraczać 10 metrów (10m)");
         }
 
-        //Przciązanie metody ToString() do formowatowania wymiarów
+        //Przeciążanie metody ToString() do formatowania wymiarów
         // Metoda do formatowania i konwersji wymiarów pudełka do stringa
         public string ToString(string format, IFormatProvider formatProvider = null)
         {
-            // Jeśli format jest pusty lub null, ustawiamy domyślny format "m"
             if (string.IsNullOrWhiteSpace(format))
             {
-                format = "m";
+                format = "m"; // Domyślny format
             }
 
-
-            // Jeśli formatProvider jest null, ustawiamy domyślny InvariantCulture
             formatProvider ??= CultureInfo.InvariantCulture;
 
-            // Obsługiwane jednostki miary
             string unit = format switch
             {
-                "m" => "m",         // Metry
-                "cm" => "cm",       // Centymetry
-                "mm" => "mm",       // Milimetry
-                _ => throw new FormatException($"Nieznany format: {format}") // Wyjątek dla nieznanego formatu
-            };
-
-            // Współczynnik przeliczenia na zadaną jednostkę
-            double factor = format switch
-            {
-                "m" => 1,           // Brak przeliczenia - jednostka bazowa
-                "cm" => 100,        // Przeliczenie na centymetry (1 metr = 100 cm)
-                "mm" => 1000,       // Przeliczenie na milimetry (1 metr = 1000 mm)
-                _ => throw new FormatException($"Nieznany format: {format}") // Wyjątek dla nieznanego formatu
-            };
-
-            // Formatowanie stringa zgodnie z wymaganiami testu (dokładność zależna od jednostki)
-            string numberFormat = format switch
-            {
-                "m" => "0.000",     // Dla metrów zawsze trzy miejsca po przecinku
-                "cm" => "0.0",      // Dla centymetrów jedno miejsce po przecinku
-                "mm" => "0",        // Dla milimetrów brak miejsc po przecinku
+                "m" => "m",
+                "cm" => "cm",
+                "mm" => "mm",
                 _ => throw new FormatException($"Nieznany format: {format}")
             };
 
-            // Tworzenie sformatowanego stringa
-            return string.Format(formatProvider, "{0:" + numberFormat + "} {1} × {2:" + numberFormat + "} {1} × {3:" + numberFormat + "} {1}",
-                A * factor, unit, B * factor, C * factor);
+            double factor = format switch
+            {
+                "m" => 1,
+                "cm" => 100,
+                "mm" => 1000,
+                _ => throw new FormatException($"Nieznany format: {format}")
+            };
 
-            //{1}: Jednostka miary (unit) czyli przykładowo np. "m", "cm", "mm"
-            //{2:0.###}: Druga liczba (B * factor), również zaokrąglona do trzech miejsc po przecinku.
-            //{3:0.###}: Trzecia liczba (C * factor), również zaokrąglona do trzech miejsc po przecinku.
+            string numberFormat = format switch
+            {
+                "m" => "0.000",  // 3 miejsca po przecinku dla metrów
+                "cm" => "0.0",   // 1 miejsce po przecinku dla centymetrów
+                "mm" => "0",     // Brak miejsc po przecinku dla milimetrów
+                _ => throw new FormatException($"Nieznany format: {format}")
+            };
 
+            // Zwracamy sformatowany ciąg znaków
+            return string.Format(formatProvider,
+                "{0:" + numberFormat + "} {1} × {2:" + numberFormat + "} {1} × {3:" + numberFormat + "} {1}",
+                Math.Round(A * factor, format == "m" ? 3 : format == "cm" ? 1 : 0), unit,
+                Math.Round(B * factor, format == "m" ? 3 : format == "cm" ? 1 : 0),
+                Math.Round(C * factor, format == "m" ? 3 : format == "cm" ? 1 : 0));
         }
 
+        // Przeciążenie metody ToString() bez parametrów
+        public override string ToString()
+        {
+            // Domyślny format to "m" (metry)
+            return ToString("m", CultureInfo.InvariantCulture);
+        }
 
-        //Implementacja metody Equals do porównania pudełek bez względu na kolejnośc ich wymiarów 
+        //Implementacja metody Equals do porównania pudełek bez względu na kolejność ich wymiarów 
         public bool Equals(Pudelko other)
         {
             //Jeżeli obiekt jest null to zwracamy false
@@ -129,19 +141,18 @@ namespace PudelkoLibrary
             //Jeżeli obiekt jest ten sam to zwracamy true - tworzymy tablice wymiarów
             double[] wym1 = { A, B, C };
             double[] wym2 = { other.A, other.B, other.C };
-            
+
             //Sortujemy tablice wymiarów aby porównać je bez względu na kolejność
             Array.Sort(wym1);
             Array.Sort(wym2);
 
             //Porównujemy posortowane tablice wymiarów
-            return wym1[0] == wym2[0] && 
-                   wym1[1] == wym2[1] && 
+            return wym1[0] == wym2[0] &&
+                   wym1[1] == wym2[1] &&
                    wym1[2] == wym2[2];
         }
 
         //Przeciążenie metody Equals dla zgodności z operatorem ==
-        //Sprawdzamy czy dowolny obiekt (object obj) jest instancją klasy pudełko, jeżeli tak to porównujemy te dwa obiekty za pomocą metody (Pudelko other)
         public override bool Equals(object obj) => Equals(obj as Pudelko);
 
         //Przeciążenie metody GetHashCode() aby uzyskać unikalny kod dla każdego pudełka
@@ -156,30 +167,29 @@ namespace PudelkoLibrary
             return HashCode.Combine(wym[0], wym[1], wym[2]);
         }
 
-        //Teraz tworzymy przeciążone operatory == oraz != aby mieć możliwość porównywania pudełek
+        //Definiujemy teraz przeciążone operatory == oraz != aby mieć możliwość porównywania pudełek
         public static bool operator ==(Pudelko p1, Pudelko p2)
         {
-            //Jeżeli obiekt p1 oraz p2 jest null to zwracamy false
+            //Jeżeli obiekt p1 oraz p2 jest null to zwracamy true
             if (p1 is null && p2 is null) return true;
             //Jeżeli obiekt p1 lub obiekt p2 jest null to zwracamy false
             if (p1 is null || p2 is null) return false;
 
             //Wywołujemy metodę Equals aby porównać dwa pudełka (dla obiektu p1)
-            return p1.Equals(p2);   
+            return p1.Equals(p2);
         }
 
         //Przeciążenie operatora != aby mieć możliwość porównywania pudełek za pomocą operatora != (negacja)
-        //Warto zauważyć, że ten operator musi zostać nadpisany w taki sposób, aby był zgodny z operatorem ==
         public static bool operator !=(Pudelko p1, Pudelko p2) => !(p1 == p2);
 
-        //Definiujemy teraz przeciązony operator łączenia pudełek (+)
+        //Definiujemy teraz przeciążony operator łączenia pudełek (+)
         public static Pudelko operator +(Pudelko p1, Pudelko p2)
         {
             //Jeżeli obiekt p1 oraz p2 jest null to wyrzucamy wyjątek ArgumentNullException mówiący o tym, że nie można dodać pustych pudełek
             if (p1 is null || p2 is null)
                 throw new ArgumentNullException("Nie można dodać pustego pudełka!");
 
-            //definiujemy nowe wymiary pudełka na podstawie wymiarów p1 i p2
+            //Definiujemy nowe wymiary pudełka na podstawie wymiarów p1 i p2
             double noweA = Math.Max(p1.A, p2.A);
             double noweB = Math.Max(p1.B, p2.B);
             double noweC = Math.Max(p1.C, p2.C);
@@ -189,7 +199,7 @@ namespace PudelkoLibrary
         }
 
         //Definiujemy jawną konwersję (explicit) z klasy Pudelko na typ double[] (w metrach)
-        public static explicit operator double[](Pudelko p) => new [] { p.A, p.B, p.C };
+        public static explicit operator double[](Pudelko p) => new[] { p.A, p.B, p.C };
 
         //Definiujemy niejawną (implicit) konwersję z ValueTuple na typ pudełko (w milimetrach)
         public static implicit operator Pudelko(ValueTuple<int, int, int> wymiary)
@@ -197,7 +207,7 @@ namespace PudelkoLibrary
             return new Pudelko(wymiary.Item1, wymiary.Item2, wymiary.Item3, UnitOfMeasure.milimeter);
         }
 
-        //Mechanizm przeglądarnia (tylko do odczytu - immutable) długości krawędzi pudełka poprzez odwołanie się do indeksów
+        //Mechanizm przeglądania (tylko do odczytu - immutable) długości krawędzi pudełka poprzez odwołanie się do indeksów
         public double this[int index] => index switch
         {
             //Jeżeli indeks jest równy 0 to zwracamy wymiar A
@@ -208,14 +218,12 @@ namespace PudelkoLibrary
             2 => C,
             //Jeżeli indeks nie pasuje do żadnej z powyższych wartości to wyrzucamy wyjątek IndexOutOfRangeException
             _ => throw new IndexOutOfRangeException("Indeks musi być z zakresu 0-2")
-
         };
 
-        //Przeglądanie długości krawędzi pudełka poprzez pętle foreach
+        //Przeglądanie długości krawędzi pudełka poprzez pętlę foreach
         public IEnumerator GetEnumerator()
         {
-            //Zwracamy długość krawędzi pudełka w kolejności A, B, C
-            //Używamy yield return aby zwrócić długości krawędzi pudełka A, B, C w konkretnie ustalonej kolejności
+            //Zwracamy długości krawędzi pudełka w kolejności A, B, C
             yield return A;
             yield return B;
             yield return C;
@@ -224,7 +232,7 @@ namespace PudelkoLibrary
         //Metoda Parse do tworzenia obiektu na podstawie tekstowej reprezentacji wymiarów pudełka
         public static Pudelko Parse(string input)
         {
-            // Sprawdzamy czy input jest nullem bądź pusty, jeśli tak, to wyrzucamy wyjątek ArgumentException
+            // Sprawdzamy, czy input jest nullem bądź pusty, jeśli tak, to wyrzucamy wyjątek ArgumentException
             if (string.IsNullOrWhiteSpace(input))
                 throw new ArgumentException("Wejściowy string nie może być nullem bądź być pusty!");
 
@@ -258,7 +266,5 @@ namespace PudelkoLibrary
             // Tworzymy nowe pudełko na podstawie wymiarów a, b, c oraz jednostki miary (unit)
             return new Pudelko(a, b, c, unit);
         }
-
     }
 }
-
