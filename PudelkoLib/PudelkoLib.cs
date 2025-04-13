@@ -16,7 +16,7 @@ namespace PudelkoLibrary
 
     //Klasa pudełko reprezentująca nasze trójwymiarowe pudełko 
     //Używamy sealed class aby zablkokować dziedziczenie klasy
-    public sealed class PudelkoLib :  IFormattable
+    public sealed class Pudelko :  IFormattable
     {
         //Pola przechowujące wymiary pudełka w metrach 
         private readonly double a;
@@ -35,7 +35,7 @@ namespace PudelkoLibrary
         public double Pole => Math.Round(2 * (A * B + B * C + A * C), 6);
 
         //Konstruktor klasy PudelkoLib przyjmujący wymiary pudełka i jednostkę miary
-        public PudelkoLib(double a = 0.1, double b = 0.1, double c = 0.1, UnitOfMeasure unit = UnitOfMeasure.meter)
+        public Pudelko(double a = 0.1, double b = 0.1, double c = 0.1, UnitOfMeasure unit = UnitOfMeasure.meter)
         {
             //konwertujemy jednostki na metry
             this.a = ConvertToMeters(a, unit);
@@ -112,14 +112,36 @@ namespace PudelkoLibrary
         }
 
         //Metoda Parse do tworzenia obiektu na podstawie tekstowej reprezentacji wymiarów pudełka
-        public static PudelkoLib Parse(string input)
+        public static Pudelko Parse(string input)
         {
+            //wyrzucenie wyjątku NotImplementedException jeżeli nie zaimplementowano metody
             throw new NotImplementedException();
         }
 
+        //Implementacja metody Equals do porównania pudełek bez względu na kolejnośc ich wymiarów 
+        public bool Equals(Pudelko other)
+        {
+            //Jeżeli obiekt jest null to zwracamy false
+            if (other is null) return false;
 
+            //Jeżeli obiekt jest ten sam to zwracamy true - tworzymy tablice wymiarów
+            double[] wym1 = { A, B, C };
+            double[] wym2 = { other.A, other.B, other.C };
+            
+            //Sortujemy tablice wymiarów aby porównać je bez względu na kolejność
+            Array.Sort(wym1);
+            Array.Sort(wym2);
 
+            //Porównujemy posortowane tablice wymiarów
+            return wym1[0] == wym2[0] && 
+                   wym1[1] == wym2[1] && 
+                   wym1[2] == wym2[2];
+        }
 
-    }
+        //Przeciążenie metody Equals dla zgodności z operatorem ==
+        //Sprawdzamy czy dowolny obiekt (object obj) jest instancją klasy pudełko, jeżeli tak to porównujemy te dwa obiekty za pomocą metody (Pudelko other)
+        public override bool Equals(object obj) => Equals(obj as Pudelko);
+
+    }   
 }
 
