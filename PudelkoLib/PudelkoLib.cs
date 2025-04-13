@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Globalization;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 
 
 namespace PudelkoLibrary
@@ -216,13 +217,48 @@ namespace PudelkoLibrary
         //Metoda Parse do tworzenia obiektu na podstawie tekstowej reprezentacji wymiarów pudełka
         public static Pudelko Parse(string input)
         {
-            
+            //sprawdzamy czy input jest nullem bądź pusty, jezeli tak to wyrzucamy wyjątek ArgumentException
+            if (string.IsNullOrWhiteSpace(input))
+                throw new ArgumentException("Wejściowy string nie może być nullem bądź być pusty!");
+
+            //Tworzymy wzorzec regex do wyodrębnienia wymiarów pudełka z tekstu
+            //wzorzec wyrażenia regularnego (regex) do wyodrębnienia wymiarów pudełka
+            var pattern = @"(\d+(\.\d{1,3})?)\s*(m|cm|mm)\s*×\s*(\d+(\.\d{1,3})?)\s*(m|cm|mm)\s*×\s*(\d+(\.\d{1,3})?)\s*(m|cm|mm)";
+            //Regex.Match() - metoda do dopasowania wzorca regex do tekstu
+            var match = Regex.Match(input, pattern);
+
+            //Jeżeli nie udało się dopasować wzorca do tekstu to wyrzucamy wyjątek FormatException
+            if (!match.Success)
+                throw new FormatException("Nieprawidłowy format wymiarów pudełka!");
+
+            //Wyodrębniamy wartości wymiarów pudełka z dopasowanego wzorca
+            //match.Groups[1].Value - wartość wymiaru A
+            double a = double.Parse(match.Groups[1].Value);
+            //match.Groups[3].Value - jednostka miary A
+            string unitA = match.Groups[3].Value;
+
+            //match.Groups[4].Value - wartość wymiaru B
+            double b = double.Parse(match.Groups[4].Value);
+            //match.Groups[6].Value - jednostka miary B
+            string unitB = match.Groups[6].Value;
+
+            //match.Groups[7].Value - wartość wymiaru C
+            double c = double.Parse(match.Groups[7].Value);
+            //match.Groups[9].Value - jednostka miary C
+            string unitC = match.Groups[9].Value;
+
+            //Mapujemy jednostki miary A, B, C na jedną jednostkę miary im odpowiadającą 
+            UnitOfMeasure unit = unitA switch
+            {
+                "m" => UnitOfMeasure.meter,
+                "cm" => UnitOfMeasure.centimeter,
+                "mm" => UnitOfMeasure.milimeter,
+                _ => throw new FormatException("Nieprawidłowa jednostka miary!")
+            };
+
+            //Tworzymy nowe ppudełko na podstawie wymiarów a, b, c oraz jednostki miary (unit)
+            return new Pudelko(a, b, c, unit);
         }
-
-
-
-
-
 
     }
 }
