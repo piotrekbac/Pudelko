@@ -16,7 +16,7 @@ namespace PudelkoLibrary
 
     //Klasa pudełko reprezentująca nasze trójwymiarowe pudełko 
     //Używamy sealed class aby zablkokować dziedziczenie klasy
-    public sealed class Pudelko :  IEquatable<Pudelko>, IFormattable
+    public sealed class Pudelko :  IEquatable<Pudelko>, IEnumerable ,IFormattable
     {
         //Pola przechowujące wymiary pudełka w metrach 
         private readonly double a;
@@ -111,12 +111,6 @@ namespace PudelkoLibrary
 
         }
 
-        //Metoda Parse do tworzenia obiektu na podstawie tekstowej reprezentacji wymiarów pudełka
-        public static Pudelko Parse(string input)
-        {
-            //wyrzucenie wyjątku NotImplementedException jeżeli nie zaimplementowano metody
-            throw new NotImplementedException();
-        }
 
         //Implementacja metody Equals do porównania pudełek bez względu na kolejnośc ich wymiarów 
         public bool Equals(Pudelko other)
@@ -170,7 +164,63 @@ namespace PudelkoLibrary
         //Warto zauważyć, że ten operator musi zostać nadpisany w taki sposób, aby był zgodny z operatorem ==
         public static bool operator !=(Pudelko p1, Pudelko p2) => !(p1 == p2);
 
-        
+        //Definiujemy teraz przeciązony operator łączenia pudełek (+)
+        public static Pudelko operator +(Pudelko p1, Pudelko p2)
+        {
+            //Jeżeli obiekt p1 oraz p2 jest null to wyrzucamy wyjątek ArgumentNullException mówiący o tym, że nie można dodać pustych pudełek
+            if (p1 is null || p2 is null)
+                throw new ArgumentNullException("Nie można dodać pustego pudełka!");
+
+            //definiujemy nowe wymiary pudełka na podstawie wymiarów p1 i p2
+            double noweA = Math.Max(p1.A, p2.A);
+            double noweB = Math.Max(p1.B, p2.B);
+            double noweC = Math.Max(p1.C, p2.C);
+
+            //Tworzymy nowe pudełko na podstawie wymiarów newA, newB, newC
+            return new Pudelko(noweA, noweB, noweC); //Zwracamy nowe pudełko z wymiarami A, B, C
+        }
+
+        //Definiujemy jawną konwersję (explicit) z klasy Pudelko na typ double[] (w metrach)
+        public static explicit operator double[](Pudelko p) => new [] { p.A, p.B, p.C };
+
+        //Definiujemy niejawną (implicit) konwersję z ValueTuple na typ pudełko (w milimetrach)
+        public static implicit operator Pudelko(ValueTuple<int, int, int> wymiary)
+        {
+            return new Pudelko(wymiary.Item1, wymiary.Item2, wymiary.Item3, UnitOfMeasure.milimeter);
+        }
+
+        //Mechanizm przeglądarnia (tylko do odczytu - immutable) długości krawędzi pudełka poprzez odwołanie się do indeksów
+        public double this[int index] => index switch
+        {
+            //Jeżeli indeks jest równy 0 to zwracamy wymiar A
+            0 => A,
+            //Jeżeli indeks jest równy 1 to zwracamy wymiar B
+            1 => B,
+            //Jeżeli indeks jest równy 2 to zwracamy wymiar C
+            2 => C,
+            //Jeżeli indeks nie pasuje do żadnej z powyższych wartości to wyrzucamy wyjątek IndexOutOfRangeException
+            _ => throw new IndexOutOfRangeException("Indeks musi być z zakresu 0-2")
+
+        };
+
+        //Przeglądanie długości krawędzi pudełka poprzez pętle foreach
+        public IEnumerator GetEnumerator()
+        {
+            //Zwracamy długość krawędzi pudełka w kolejności A, B, C
+            //Używamy yield return aby zwrócić długości krawędzi pudełka A, B, C w konkretnie ustalonej kolejności
+            yield return A;
+            yield return B;
+            yield return C;
+        }
+
+        //Metoda Parse do tworzenia obiektu na podstawie tekstowej reprezentacji wymiarów pudełka
+        public static Pudelko Parse(string input)
+        {
+            
+        }
+
+
+
 
 
 
