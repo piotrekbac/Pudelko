@@ -447,16 +447,58 @@ namespace PudelkoUnitTests
 
 
         #region Pole, Objętość ===================================
-        // ToDo
+
+        [TestMethod]
+        public void TestPole()
+        {
+            //Arrange 
+            Pudelko mojePudelkoPiotrBacior = new Pudelko(2, 3, 4, UnitOfMeasure.meter);
+
+            //Act i assert
+            Assert.AreEqual(52.000000000, mojePudelkoPiotrBacior.Pole);
+        }
+
+        [TestMethod]
+        public void TestObjetosc()
+        {
+            //Arrange
+            Pudelko mojePudelkoPiotrBacior = new Pudelko(2, 3, 4, UnitOfMeasure.meter);
+
+            //Act i assert
+            Assert.AreEqual(24.000000000, mojePudelkoPiotrBacior.Objetosc);
+        }
 
         #endregion
 
         #region Equals ===========================================
-        // ToDo
+        [TestMethod]
+        public void OperatorEqauls()
+        {
+            //Arrange 
+            Pudelko mojePudelkoPiotrBacior1 = new Pudelko(1, 2, 3, UnitOfMeasure.meter);
+            Pudelko mojePudelkoPiotrBacior2 = new Pudelko(3, 1, 2, UnitOfMeasure.meter);
+
+            //Act i assert
+            Assert.IsTrue(mojePudelkoPiotrBacior1 == mojePudelkoPiotrBacior2);
+        }
         #endregion
 
         #region Operators overloading ===========================
-        // ToDo
+
+        [TestMethod]
+        public void OperatorDodawania()
+        {
+            //Arrange 
+            Pudelko mojePudelkoPiotrBacior1 = new Pudelko(1, 2, 3, UnitOfMeasure.meter);
+            Pudelko mojePudelkoPiotrBacior2 = new Pudelko(3, 1, 2, UnitOfMeasure.meter);
+
+            //Act
+            Pudelko mojePudelkoPiotrBaciorWynik = mojePudelkoPiotrBacior1 + mojePudelkoPiotrBacior2;
+
+            //Assert
+            Assert.AreEqual(new Pudelko(4, 3, 5, UnitOfMeasure.meter), mojePudelkoPiotrBaciorWynik);
+        }
+
         #endregion
 
         #region Conversions =====================================
@@ -510,6 +552,17 @@ namespace PudelkoUnitTests
 
         #region Parsing =========================================
 
+        [TestMethod]
+        public void MetodaParse()
+        {
+            //Arrange
+            Pudelko mojePudelkoPiotrBacior = Pudelko.Parse("2.5 m × 9.321 m × 0.100 m");
+
+            //Act i assert
+            Assert.AreEqual(2.5, mojePudelkoPiotrBacior.A);
+            Assert.AreEqual(9.321, mojePudelkoPiotrBacior.B);
+            Assert.AreEqual(0.100, mojePudelkoPiotrBacior.C);
+        }
         #endregion
 
     }

@@ -1,4 +1,2 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿//Piotr Bacior 15 722 - Pudelko 
 
-//aha
