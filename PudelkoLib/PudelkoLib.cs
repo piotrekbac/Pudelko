@@ -16,7 +16,7 @@ namespace PudelkoLibrary
 
     //Klasa pudełko reprezentująca nasze trójwymiarowe pudełko 
     //Używamy sealed class aby zablkokować dziedziczenie klasy
-    public sealed class Pudelko :  IFormattable
+    public sealed class Pudelko :  IEquatable<Pudelko>, IFormattable
     {
         //Pola przechowujące wymiary pudełka w metrach 
         private readonly double a;
@@ -142,6 +142,38 @@ namespace PudelkoLibrary
         //Sprawdzamy czy dowolny obiekt (object obj) jest instancją klasy pudełko, jeżeli tak to porównujemy te dwa obiekty za pomocą metody (Pudelko other)
         public override bool Equals(object obj) => Equals(obj as Pudelko);
 
-    }   
+        //Przeciążenie metody GetHashCode() aby uzyskać unikalny kod dla każdego pudełka
+        public override int GetHashCode()
+        {
+            //Tworzymy tablice wymiarów typu double i przypisujemy do niej wartości wymiarów A, B, C
+            double[] wym = { A, B, C };
+            //Sortujemy tablice wymiarów aby uzyskać unikalny kod dla każdego pudełka
+            Array.Sort(wym);
+
+            //Zwracamy unikalny kod dla każdego pudełka za pomocą metody HashCode.Combine
+            return HashCode.Combine(wym[0], wym[1], wym[2]);
+        }
+
+        //Teraz tworzymy przeciążone operatory == oraz != aby mieć możliwość porównywania pudełek
+        public static bool operator ==(Pudelko p1, Pudelko p2)
+        {
+            //Jeżeli obiekt p1 oraz p2 jest null to zwracamy false
+            if (p1 is null && p2 is null) return true;
+            //Jeżeli obiekt p1 lub obiekt p2 jest null to zwracamy false
+            if (p1 is null || p2 is null) return false;
+
+            //Wywołujemy metodę Equals aby porównać dwa pudełka (dla obiektu p1)
+            return p1.Equals(p2);   
+        }
+
+        //Przeciążenie operatora != aby mieć możliwość porównywania pudełek za pomocą operatora != (negacja)
+        //Warto zauważyć, że ten operator musi zostać nadpisany w taki sposób, aby był zgodny z operatorem ==
+        public static bool operator !=(Pudelko p1, Pudelko p2) => !(p1 == p2);
+
+        
+
+
+
+    }
 }
 
