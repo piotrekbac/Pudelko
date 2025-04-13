@@ -489,14 +489,14 @@ namespace PudelkoUnitTests
         public void OperatorDodawania()
         {
             //Arrange 
-            Pudelko mojePudelkoPiotrBacior1 = new Pudelko(1, 2, 3, UnitOfMeasure.meter);
-            Pudelko mojePudelkoPiotrBacior2 = new Pudelko(3, 1, 2, UnitOfMeasure.meter);
+            Pudelko mojePudelkoPiotrBacior1 = new Pudelko(2, 3, 4, UnitOfMeasure.meter);
+            Pudelko mojePudelkoPiotrBacior2 = new Pudelko(1, 5, 3, UnitOfMeasure.meter);
 
             //Act
             Pudelko mojePudelkoPiotrBaciorWynik = mojePudelkoPiotrBacior1 + mojePudelkoPiotrBacior2;
 
             //Assert
-            Assert.AreEqual(new Pudelko(4, 3, 5, UnitOfMeasure.meter), mojePudelkoPiotrBaciorWynik);
+            Assert.AreEqual(new Pudelko(2, 5, 4, UnitOfMeasure.meter), mojePudelkoPiotrBaciorWynik);
         }
 
         #endregion
@@ -556,12 +556,12 @@ namespace PudelkoUnitTests
         public void MetodaParse()
         {
             //Arrange
-            Pudelko mojePudelkoPiotrBacior = Pudelko.Parse("2.5 m × 9.321 m × 0.100 m");
+            Pudelko PBPudelko = Pudelko.Parse("2.500 m × 9.321 m × 0.100 m");
 
             //Act i assert
-            Assert.AreEqual(2.5, mojePudelkoPiotrBacior.A);
-            Assert.AreEqual(9.321, mojePudelkoPiotrBacior.B);
-            Assert.AreEqual(0.100, mojePudelkoPiotrBacior.C);
+            Assert.AreEqual(2.5, PBPudelko.A);
+            Assert.AreEqual(9.321, PBPudelko.B);
+            Assert.AreEqual(0.1, PBPudelko.C);
         }
         #endregion
 
