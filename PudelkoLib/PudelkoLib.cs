@@ -35,77 +35,84 @@ namespace PudelkoLibrary
         //Właściwość dzięki które obliczamy pole powierzchni całkowitej, zaokrągloną do 6 miejsc po przecinku
         public double Pole => Math.Round(2 * (A * B + B * C + A * C), 6);
 
-        //Konstruktor klasy PudelkoLib przyjmujący wymiary pudełka i jednostkę miary
+        // Konstruktor klasy Pudelko przyjmujący wymiary pudełka i jednostkę miary
         public Pudelko(double a = 0.1, double b = 0.1, double c = 0.1, UnitOfMeasure unit = UnitOfMeasure.meter)
         {
-            //konwertujemy jednostki na metry
+            // Konwertujemy jednostki na metry i zaokrąglamy odpowiednio
             this.a = ConvertToMeters(a, unit);
             this.b = ConvertToMeters(b, unit);
             this.c = ConvertToMeters(c, unit);
 
-
-            //walidacja poprawności wymiarów
+            // Walidacja poprawności wymiarów
             WalidacjaWymiarow();
         }
 
-        //Prywatna metoda ConvertToMeters konwertująca jednostki na metry
+        // Prywatna metoda ConvertToMeters konwertująca jednostki na metry
         private static double ConvertToMeters(double value, UnitOfMeasure unit)
         {
+            // Zastosowanie zaokrągleń w zależności od jednostki
             return unit switch
             {
-                UnitOfMeasure.milimeter => value / 1000,
-                UnitOfMeasure.centimeter => value / 100,
-                UnitOfMeasure.meter => value,
+                UnitOfMeasure.milimeter => Math.Round(value / 1000, 3), // Zaokrąglenie do 3 miejsc po przecinku
+                UnitOfMeasure.centimeter => Math.Round(value / 100, 3), // Zaokrąglenie do 3 miejsc po przecinku
+                UnitOfMeasure.meter => Math.Round(value, 3), // Zaokrąglenie do 3 miejsc po przecinku (dla spójności)
                 _ => throw new ArgumentOutOfRangeException(nameof(unit), "Nieprawidłowa jednostka miary!")
             };
         }
 
-        //Metoda WalidacjaWymiarow sprawdzająca poprawność wymiarów pudełka (muszą być dodatnie i nie większe niż 10 metrów)
+        // Metoda WalidacjaWymiarow sprawdzająca poprawność wymiarów pudełka (muszą być dodatnie i nie większe niż 10 metrów)
         private void WalidacjaWymiarow()
         {
+            // Walidacja: wymiary muszą być dodatnie i nie mogą przekraczać 10 metrów
             if (a <= 0 || b <= 0 || c <= 0 || a > 10 || b > 10 || c > 10)
                 throw new ArgumentOutOfRangeException("Wymiary muszą być dodatnie i nie mogą przekraczać 10 metrów (10m)");
-
         }
 
         //Przciązanie metody ToString() do formowatowania wymiarów
-        public override string ToString()
-        {
-            return ToString("m");
-        }
-
-        //Metoda do formatowania i konwersji wymiarów pudełka do stringa
+        // Metoda do formatowania i konwersji wymiarów pudełka do stringa
         public string ToString(string format, IFormatProvider formatProvider = null)
         {
-            //Jeśli format jest pusty (formatProvider = null) to ustawiamy domyślny format - domyślna kultura (CultureInfo.CurrentCulture) - formatowanie liczb w zależności od języka bądź regionu
-            formatProvider ??= CultureInfo.CurrentCulture;
+            // Jeśli format jest pusty lub null, ustawiamy domyślny format "m"
+            if (string.IsNullOrWhiteSpace(format))
+            {
+                format = "m";
+            }
 
-            //Na podstawie wartości format switch przypisywana jest odpowiednia jednostka 
+
+            // Jeśli formatProvider jest null, ustawiamy domyślny InvariantCulture
+            formatProvider ??= CultureInfo.InvariantCulture;
+
+            // Obsługiwane jednostki miary
             string unit = format switch
             {
-                "m" => "m",         //przypisanie wartości m jak metry 
-                "cm" => "cm",       //przypisanie wartości cm jak centymetry
-                "mm" => "mm",       //przypisanie wartości mm jak milimetry
-                //Jeżeli format nie pasuje do żadnej z powyższych jednostek to wyrzucamy wyjątek o nieznanym formacie.
-                _ => throw new FormatException($"Nieznany format: {format}")
+                "m" => "m",         // Metry
+                "cm" => "cm",       // Centymetry
+                "mm" => "mm",       // Milimetry
+                _ => throw new FormatException($"Nieznany format: {format}") // Wyjątek dla nieznanego formatu
             };
 
-            //Na podstawie wartości format switch określany jest współczynnik przeliczeniowy dla danych jednostek
+            // Współczynnik przeliczenia na zadaną jednostkę
             double factor = format switch
             {
-                "m" => 1,           //brak przeliczenia - jednostka bazowa
-                "cm" => 100,        //przeliczenie na centymetry (1 metr to 100 centymetrów) 
-                "mm" => 1000,       //przeliczenie na milimetry (1 metr to 1000 milimetrów)
-                //Jeżeli format nie pasuje do żadnej z powyższych jednostek to wyrzucamy wyjątek o nieznanym formacie.
-                _ => throw new FormatException($"Nieznany format: {format}")
-                
+                "m" => 1,           // Brak przeliczenia - jednostka bazowa
+                "cm" => 100,        // Przeliczenie na centymetry (1 metr = 100 cm)
+                "mm" => 1000,       // Przeliczenie na milimetry (1 metr = 1000 mm)
+                _ => throw new FormatException($"Nieznany format: {format}") // Wyjątek dla nieznanego formatu
             };
 
+            // Formatowanie stringa zgodnie z wymaganiami testu (dokładność zależna od jednostki)
+            string numberFormat = format switch
+            {
+                "m" => "0.000",     // Dla metrów zawsze trzy miejsca po przecinku
+                "cm" => "0.0",      // Dla centymetrów jedno miejsce po przecinku
+                "mm" => "0",        // Dla milimetrów brak miejsc po przecinku
+                _ => throw new FormatException($"Nieznany format: {format}")
+            };
 
-            //Metoda string.Format formatuje tekst z wykorzystaniem miejsc zastępczych {n}
-            return string.Format("{0:0.###} {1} × {2:0.###} {1} × {3:0.###} {1}",
-                //{0:0.###}: Pierwsza liczba (A * factor) zaokrąglana jest do maksymalnie trzech miejsc po przycinku
+            // Tworzenie sformatowanego stringa
+            return string.Format(formatProvider, "{0:" + numberFormat + "} {1} × {2:" + numberFormat + "} {1} × {3:" + numberFormat + "} {1}",
                 A * factor, unit, B * factor, C * factor);
+
             //{1}: Jednostka miary (unit) czyli przykładowo np. "m", "cm", "mm"
             //{2:0.###}: Druga liczba (B * factor), również zaokrąglona do trzech miejsc po przecinku.
             //{3:0.###}: Trzecia liczba (C * factor), również zaokrąglona do trzech miejsc po przecinku.
@@ -217,37 +224,29 @@ namespace PudelkoLibrary
         //Metoda Parse do tworzenia obiektu na podstawie tekstowej reprezentacji wymiarów pudełka
         public static Pudelko Parse(string input)
         {
-            //sprawdzamy czy input jest nullem bądź pusty, jezeli tak to wyrzucamy wyjątek ArgumentException
+            // Sprawdzamy czy input jest nullem bądź pusty, jeśli tak, to wyrzucamy wyjątek ArgumentException
             if (string.IsNullOrWhiteSpace(input))
                 throw new ArgumentException("Wejściowy string nie może być nullem bądź być pusty!");
 
-            //Tworzymy wzorzec regex do wyodrębnienia wymiarów pudełka z tekstu
-            //wzorzec wyrażenia regularnego (regex) do wyodrębnienia wymiarów pudełka
+            // Tworzymy wzorzec regex do wyodrębnienia wymiarów pudełka z tekstu
             var pattern = @"(\d+(\.\d{1,3})?)\s*(m|cm|mm)\s*×\s*(\d+(\.\d{1,3})?)\s*(m|cm|mm)\s*×\s*(\d+(\.\d{1,3})?)\s*(m|cm|mm)";
-            //Regex.Match() - metoda do dopasowania wzorca regex do tekstu
             var match = Regex.Match(input, pattern);
 
-            //Jeżeli nie udało się dopasować wzorca do tekstu to wyrzucamy wyjątek FormatException
+            // Jeśli nie udało się dopasować wzorca do tekstu, wyrzucamy wyjątek FormatException
             if (!match.Success)
                 throw new FormatException("Nieprawidłowy format wymiarów pudełka!");
 
-            //Wyodrębniamy wartości wymiarów pudełka z dopasowanego wzorca
-            //match.Groups[1].Value - wartość wymiaru A
-            double a = double.Parse(match.Groups[1].Value);
-            //match.Groups[3].Value - jednostka miary A
+            // Wyodrębniamy wartości wymiarów pudełka z dopasowanego wzorca, używając kultury InvariantCulture
+            double a = double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
             string unitA = match.Groups[3].Value;
 
-            //match.Groups[4].Value - wartość wymiaru B
-            double b = double.Parse(match.Groups[4].Value);
-            //match.Groups[6].Value - jednostka miary B
+            double b = double.Parse(match.Groups[4].Value, CultureInfo.InvariantCulture);
             string unitB = match.Groups[6].Value;
 
-            //match.Groups[7].Value - wartość wymiaru C
-            double c = double.Parse(match.Groups[7].Value);
-            //match.Groups[9].Value - jednostka miary C
+            double c = double.Parse(match.Groups[7].Value, CultureInfo.InvariantCulture);
             string unitC = match.Groups[9].Value;
 
-            //Mapujemy jednostki miary A, B, C na jedną jednostkę miary im odpowiadającą 
+            // Mapujemy jednostki miary na enum UnitOfMeasure
             UnitOfMeasure unit = unitA switch
             {
                 "m" => UnitOfMeasure.meter,
@@ -256,7 +255,7 @@ namespace PudelkoLibrary
                 _ => throw new FormatException("Nieprawidłowa jednostka miary!")
             };
 
-            //Tworzymy nowe ppudełko na podstawie wymiarów a, b, c oraz jednostki miary (unit)
+            // Tworzymy nowe pudełko na podstawie wymiarów a, b, c oraz jednostki miary (unit)
             return new Pudelko(a, b, c, unit);
         }
 
