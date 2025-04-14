@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -21,7 +22,6 @@ namespace PudelkoLibrary
         private readonly double a;
         private readonly double b;
         private readonly double c;
-        private readonly UnitOfMeasure originalUnit;
 
         //Teraz ustawiamy właściwości dostępu do wymiarów pudełka (zaokrąglone do trzech miejsc po przecinku)
         public double A => Math.Round(a, 3);
@@ -35,14 +35,8 @@ namespace PudelkoLibrary
         public double Pole => Math.Round(2 * (A * B + B * C + A * C), 6);
 
         // Konstruktor klasy Pudelko przyjmujący wymiary pudełka i jednostkę miary
-
-        // Konstruktor klasy Pudelko
-        public Pudelko(double? a = null, double? b = null, double? c = null, UnitOfMeasure unit = UnitOfMeasure.centimeter)
+        public Pudelko(double? a = null, double? b = null, double? c = null, UnitOfMeasure unit = UnitOfMeasure.meter)
         {
-            // Przechowaj oryginalną jednostkę miary
-            originalUnit = unit;
-
-            // Ustaw domyślne wartości w oparciu o jednostkę miary (10 cm w wybranej jednostce)
             double defaultValue = unit switch
             {
                 UnitOfMeasure.milimeter => 100,   // 10 cm w milimetrach
@@ -51,35 +45,63 @@ namespace PudelkoLibrary
                 _ => throw new ArgumentOutOfRangeException(nameof(unit), "Nieznana jednostka miary!")
             };
 
-            // Przypisz wartości parametrów, konwertując je na metry
-            this.a = ConvertToMeters(a ?? defaultValue, unit);
-            this.b = ConvertToMeters(b ?? defaultValue, unit);
-            this.c = ConvertToMeters(c ?? defaultValue, unit);
+            // Przypisujemy oryginalne wartości w podanej jednostce (dla walidacji)
+            double originalA = a ?? defaultValue;
+            double originalB = b ?? defaultValue;
+            double originalC = c ?? defaultValue;
 
-            // Walidacja wymiarów
-            WalidacjaWymiarow();
+            // Walidacja oryginalnych wartości w jednostkach wejściowych
+            WalidacjaWymiarow(originalA, originalB, originalC, unit);
+
+            // Konwersja wartości na metry z precyzyjnym zaokrągleniem
+            this.a = ConvertToMeters(originalA, unit); // Zaokrąglenie w ConvertToMeters
+            this.b = ConvertToMeters(originalB, unit);
+            this.c = ConvertToMeters(originalC, unit);
         }
+
         // Prywatna metoda ConvertToMeters konwertująca jednostki na metry
         private static double ConvertToMeters(double value, UnitOfMeasure unit)
         {
             if (value <= 0)
                 throw new ArgumentOutOfRangeException(nameof(value), "Wymiary muszą być dodatnie!");
 
+            // Dodano precyzyjne zaokrąglenie do 3 miejsc po przecinku po konwersji
             return unit switch
             {
-                UnitOfMeasure.milimeter => value / 1000,   // Milimetry na metry
-                UnitOfMeasure.centimeter => value / 100,  // Centymetry na metry
-                UnitOfMeasure.meter => value,             // Metry bez zmian
+                UnitOfMeasure.milimeter => Math.Round(value / 1000.0, 3),   // Milimetry na metry
+                UnitOfMeasure.centimeter => Math.Round(value / 100.0, 3),  // Centymetry na metry
+                UnitOfMeasure.meter => Math.Round(value, 3),               // Metry bez zmian
                 _ => throw new ArgumentOutOfRangeException(nameof(unit), "Nieprawidłowa jednostka miary!")
             };
         }
 
         // Metoda WalidacjaWymiarow sprawdzająca poprawność wymiarów pudełka (muszą być dodatnie i nie większe niż 10 metrów)
-        private void WalidacjaWymiarow()
+        private void WalidacjaWymiarow(double originalA, double originalB, double originalC, UnitOfMeasure unit)
         {
-            // Walidacja: wymiary muszą być dodatnie i nie mogą przekraczać 10 metrów
-            if (a <= 0 || b <= 0 || c <= 0 || a > 10 || b > 10 || c > 10)
-                throw new ArgumentOutOfRangeException("Wymiary muszą być dodatnie i nie mogą przekraczać 10 metrów (10m)");
+            // Zakresy dla różnych jednostek
+            double min = unit switch
+            {
+                UnitOfMeasure.milimeter => 1,      // Minimalna wartość w milimetrach
+                UnitOfMeasure.centimeter => 0.1,  // Minimalna wartość w centymetrach
+                UnitOfMeasure.meter => 0.001,     // Minimalna wartość w metrach
+                _ => throw new ArgumentOutOfRangeException(nameof(unit), "Nieprawidłowa jednostka miary!")
+            };
+
+            double max = unit switch
+            {
+                UnitOfMeasure.milimeter => 10000,  // Maksymalna wartość w milimetrach
+                UnitOfMeasure.centimeter => 1000, // Maksymalna wartość w centymetrach
+                UnitOfMeasure.meter => 10,        // Maksymalna wartość w metrach
+                _ => throw new ArgumentOutOfRangeException(nameof(unit), "Nieprawidłowa jednostka miary!")
+            };
+
+            // Walidacja: sprawdzamy oryginalne wartości w podanej jednostce
+            if (originalA < min || originalA > max ||
+                originalB < min || originalB > max ||
+                originalC < min || originalC > max)
+            {
+                throw new ArgumentOutOfRangeException("Wymiary muszą być dodatnie i odpowiednie dla podanej jednostki miary!");
+            }
         }
 
         //Przeciążanie metody ToString() do formatowania wymiarów
@@ -93,6 +115,7 @@ namespace PudelkoLibrary
 
             formatProvider ??= CultureInfo.InvariantCulture;
 
+            // Określenie jednostki miary i współczynnika konwersji
             string unit = format switch
             {
                 "m" => "m",
@@ -109,6 +132,7 @@ namespace PudelkoLibrary
                 _ => throw new FormatException($"Nieznany format: {format}")
             };
 
+            // Ustawienie precyzji w zależności od formatu
             string numberFormat = format switch
             {
                 "m" => "0.000",  // 3 miejsca po przecinku dla metrów
@@ -117,7 +141,7 @@ namespace PudelkoLibrary
                 _ => throw new FormatException($"Nieznany format: {format}")
             };
 
-            // Zwracamy sformatowany ciąg znaków
+            // Zwracamy sformatowany ciąg znaków z odpowiednimi zaokrągleniami
             return string.Format(formatProvider,
                 "{0:" + numberFormat + "} {1} × {2:" + numberFormat + "} {1} × {3:" + numberFormat + "} {1}",
                 Math.Round(A * factor, format == "m" ? 3 : format == "cm" ? 1 : 0), unit,
