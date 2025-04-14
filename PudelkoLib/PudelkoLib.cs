@@ -65,12 +65,12 @@ namespace PudelkoLibrary
             if (value <= 0)
                 throw new ArgumentOutOfRangeException(nameof(value), "Wymiary muszą być dodatnie!");
 
-            // Dodano precyzyjne zaokrąglenie do 3 miejsc po przecinku po konwersji
+            // Konwersja bez zaokrągleń, następnie zaokrąglenie w dół (MidpointRounding.ToZero)
             return unit switch
             {
-                UnitOfMeasure.milimeter => Math.Round(value / 1000.0, 3),   // Milimetry na metry
-                UnitOfMeasure.centimeter => Math.Round(value / 100.0, 3),  // Centymetry na metry
-                UnitOfMeasure.meter => Math.Round(value, 3),               // Metry bez zmian
+                UnitOfMeasure.milimeter => Math.Round(value / 1000.0, 3, MidpointRounding.ToZero),   // Milimetry na metry
+                UnitOfMeasure.centimeter => Math.Round(value / 100.0, 3, MidpointRounding.ToZero),  // Centymetry na metry
+                UnitOfMeasure.meter => Math.Round(value, 3, MidpointRounding.ToZero),              // Metry bez zmian
                 _ => throw new ArgumentOutOfRangeException(nameof(unit), "Nieprawidłowa jednostka miary!")
             };
         }
