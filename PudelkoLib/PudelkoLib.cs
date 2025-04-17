@@ -4,6 +4,8 @@ using System.Collections;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
+//Piotr Bacior - zadanie Pudelko - 15 722 - WSEI 
+
 namespace PudelkoLibrary
 {
     //Reprezentujący jednostki miary enum o nazwie UnitOfMeasure

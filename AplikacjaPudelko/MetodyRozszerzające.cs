@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+//Piotr Bacior - zadanie Pudelko - 15 722 - WSEI 
 namespace AplikacjaPudelko
 {
     

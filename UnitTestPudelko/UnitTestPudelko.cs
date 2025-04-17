@@ -565,5 +565,626 @@ namespace PudelkoUnitTests
         }
         #endregion
 
+        //===================================================================
+        //Poniżej znajdują się dodatkowe testy jednostkowe, wprowadzone przeze mnie ku lepszemu pokryciu kodu  
+
+        #region Testy operatora + ==================================
+
+        //Test dla operatora dodawania pudełek o takich samych wymiarach
+        [TestMethod]
+        public void OperatorDodawania_TakieSameWymiary()
+        {
+            //Arrange
+            Pudelko p1 = new Pudelko(2.5, 1.2, 3.3);
+            Pudelko p2 = new Pudelko(2.5, 1.2, 3.3);
+
+            //Act
+            Pudelko wynik = p1 + p2;
+
+            //Assert
+            Assert.AreEqual(new Pudelko(2.5, 1.2, 3.3), wynik);
+        }
+
+
+        //Test dla operatora dodawania pudełek, gdy jedno pudełko jest null'em
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void OperatorDodawania_NullPudelko()
+        {
+            //Arrange
+            Pudelko p1 = new Pudelko(1.0, 1.0, 1.0);
+
+            //Act i assert
+            Pudelko wynik = p1 + null;
+        }
+
+        #endregion
+
+        #region Testy Indexera =====================================
+
+        //Test dla indexera, gdzie podajemy ujemny indeks 
+        [TestMethod]
+        [ExpectedException(typeof(IndexOutOfRangeException))]
+        public void Indexer_PozaZakresem_UjemnyArgument()
+        {
+            //Arrange
+            var p = new Pudelko(1.0, 1.0, 1.0);
+
+            //Act i assert
+            var value = p[-1];
+        }
+
+        //Test dla indexera, gdzie podajemy indeks większy od 2 (zakres od 0 do 2)
+        [TestMethod]
+        [ExpectedException(typeof(IndexOutOfRangeException))]
+        public void Indexer_PozaZakresem_ZbytDużyZakres()
+        {
+            //Arrange
+            var p = new Pudelko(1.0, 1.0, 1.0);
+
+            //Act i assert
+            var value = p[3];
+        }
+
+        #endregion
+
+        #region Testy operatora Equals ===================
+
+        //Test dla operatora Equals, gdzie porównujemy dwa pudełka, sprawdzamy czy nie są null'em
+        [TestMethod]
+        public void Equals_KompresjaNull()
+        {
+            //Arrange
+            Pudelko p = new Pudelko(1.0, 1.0, 1.0);
+
+            //Act i assert
+            Assert.IsFalse(p.Equals(null));
+        }
+
+        //Test dla operatora Equals, gdzie porównujemy dwa pudełka o takich samych wymiarach
+        [TestMethod]
+        public void Equals_TakieSameObiekty()
+        {
+            //Arrange
+            Pudelko p = new Pudelko(1.0, 1.0, 1.0);
+
+            //Act i assert
+            Assert.IsTrue(p.Equals(p));
+        }
+
+        #endregion
+
+        #region Testy metody Parse ================================
+
+        //Test dla metody Parse, gdzie podajemy niepoprawny format, konkretnie - bez saparatora
+        [TestMethod]
+        [ExpectedException(typeof(FormatException))]
+        public void Parse_InvalidFormat_BezSeparatora()
+        {
+            Pudelko.Parse("2.5 m 9.3 m 1.0 m");
+        }
+
+        //Test dla metody Parse, gdzie podajemy niepoprawny format, konkretnie - niewłaściwe jednostki
+        [TestMethod]
+        [ExpectedException(typeof(FormatException))]
+        public void Parse_InvalidFormat_ZłeJednostki()
+        {
+            Pudelko.Parse("2.5 km × 9.3 km × 1.0 km");
+        }
+
+        //Test dla metody Parse, gdzie podajemy pusty string
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void Parse_PustyString()
+        {
+            Pudelko.Parse("");
+        }
+
+        //Test dla metody Parse, gdzie podajemy string z dodatkowymi spacjami i tabulatorami
+        [TestMethod]
+        public void Parse_DodatkoweSpacjeOrazTabulatory()
+        {
+            var p = Pudelko.Parse("  1.123  m  ×  2.345  m  ×  3.567  m  ");
+            Assert.AreEqual(1.123, p.A);
+            Assert.AreEqual(2.345, p.B);
+            Assert.AreEqual(3.567, p.C);
+        }
+
+        //Test dla metody Parse, gdzie podajemy string z niepoprawnymi znakami
+        [TestMethod]
+        [ExpectedException(typeof(FormatException))]
+        public void Parse_NiewłaściweZnaki()
+        {
+            Pudelko.Parse("1.123m × 2.345m × abc");
+        }
+
+        #endregion
+
+        #region Testy ToString ====================================
+
+        //Test dla metody ToString, gdzie podajemy jednostki o różnej kulturze
+        [TestMethod]
+        public void ToString_RóżnaKultura()
+        {
+            var originalCulture = CultureInfo.CurrentCulture;
+            try
+            {
+                CultureInfo.CurrentCulture = new CultureInfo("pl-PL");
+                var p = new Pudelko(2.5, 1.2, 3.3);
+                string expected = "2.500 m × 1.200 m × 3.300 m";
+                Assert.AreEqual(expected, p.ToString());
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = originalCulture;
+            }
+        }
+
+        //Test dla metody ToString, gdzie podajemy jednostki o niewłaściwym formacie
+        [TestMethod]
+        [ExpectedException(typeof(FormatException))]
+        public void ToString_NiewłaściwyFormat()
+        {
+            var p = new Pudelko(1, 1, 1);
+            p.ToString("invalid");
+        }
+
+        //Test dla metody ToString, gdzie podajemy dodatkowe spacje
+        [TestMethod]
+        public void ToString_DodatkoweSpacje()
+        {
+            var p = new Pudelko(1.123, 2.345, 3.567, UnitOfMeasure.meter);
+            string result = p.ToString("m").Replace(" ", "").Trim();
+            Assert.AreEqual("1.123m×2.345m×3.567m", result);
+        }
+
+        #endregion
+
+        #region Testy wyjątków dla konstruktorów =======================
+
+        //Test dla konstruktora, gdzie podajemy ujemne wymiary - oczekujemy wyjątku
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void Constructor_Centimeters_OutOfRange()
+        {
+            Pudelko p = new Pudelko(a: 1001, unit: UnitOfMeasure.centimeter);
+        }
+
+        #endregion
+
+        #region Testy walidatora ==================================
+
+        //Test dla walidatora, gdzie podajemy niewłaściwe jednostki - oczekujemy wyjątku
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void WalidacjaWymiarow_NiewłaściwaJednostka()
+        {
+            // Test dla nieobsługiwanej jednostki miary
+            Pudelko p = new Pudelko(1, 1, 1, (UnitOfMeasure)999);
+        }
+
+        //Test dla walidatora, gdzie podajemy wymiar ujemny - oczekujemy wyjątku
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void WalidacjaWymiarow_UjemnyWymiar()
+        {
+            // Test dla wymiaru ujemnego
+            Pudelko p = new Pudelko(-1, 1, 1, UnitOfMeasure.meter);
+        }
+
+        //Test dla walidatora, gdzie podajemy wymiar zerowy - oczekujemy wyjątku
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void WalidacjaWymiarow_WymiarZero()
+        {
+            // Test dla wymiaru zerowego
+            Pudelko p = new Pudelko(0, 0, 0, UnitOfMeasure.meter);
+        }
+
+        #endregion
+
+        #region Testy IEnumerable ================================
+
+        //Testy dla IEnumerable, gdzie iterujemy po wymiarach pudełka
+        [TestMethod]
+        public void IEnumerable_IteracjaPoWymiarach()
+        {
+            var p = new Pudelko(1.1, 2.2, 3.3);
+            var dimensions = new List<double> { 1.1, 2.2, 3.3 };
+
+            int index = 0;
+            foreach (var dimension in p)
+            {
+                Assert.AreEqual(dimensions[index], dimension);
+                index++;
+            }
+        }
+
+        #endregion
+
+        #region Pole i Objetosc Tests ==========================
+
+        //Test dla minimalnego wymiaru pola 
+        [TestMethod]
+        public void Pole_MinWymiar()
+        {
+            var p = new Pudelko(0.001, 0.001, 0.001, UnitOfMeasure.meter);
+            Assert.AreEqual(0.000006, p.Pole); // 6 * 10^-6
+        }
+
+        //Test makysmalnego wymiaru objętości
+        [TestMethod]
+        public void Objetosc_MaxWymiar()
+        {
+            var p = new Pudelko(10, 10, 10, UnitOfMeasure.meter);
+            Assert.AreEqual(1000, p.Objetosc); // 10^3
+        }
+
+        #endregion
+
+        #region Testy operatora przepełnienia =======================
+
+        //Test dla operatora dodawania, gdzie suma wymiarów przekracza maksymalne wartości
+        [TestMethod]
+        public void OperatorDodawania_MaxDimensions()
+        {
+            var p1 = new Pudelko(10, 10, 10, UnitOfMeasure.meter);
+            var p2 = new Pudelko(10, 10, 10, UnitOfMeasure.meter);
+            var result = p1 + p2;
+
+            Assert.AreEqual(10, result.A);
+            Assert.AreEqual(10, result.B);
+            Assert.AreEqual(10, result.C);
+        }
+
+        //Test dla operatora dodawania takich samych obiektów
+        [TestMethod]
+        public void OperatorEquals_TakieSameObiekty()
+        {
+            var p = new Pudelko(1, 2, 3, UnitOfMeasure.meter);
+            Assert.IsTrue(p == p);
+        }
+
+
+        #endregion
+
+        #region Testy dla ArgumentOutOfRangeException =====================
+
+        //Test dla walidacji wymiarów, gdzie podajemy niewłaściwe jednostki
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void WalidacjaWymiarow_NiewlasciweJednostki_WyrzucaWyjątek()
+        {
+            //Arrange
+            double a = 1.0, b = 1.0, c = 1.0;
+            UnitOfMeasure unit = (UnitOfMeasure)999; // Nieprawidłowa jednostka
+
+            //Act
+            var pudelko = new Pudelko(a, b, c, unit);
+        }
+
+        #endregion
+
+        #region Testy dla FormatException =====================
+
+        //Test dla metody ToString, gdzie podajemy niepoprawny format
+        [TestMethod]
+        [ExpectedException(typeof(FormatException))]
+        public void ToString_NiepoprawnyFormat_WyrzucaWyjątek()
+        {
+            //Arrange
+            var p = new Pudelko(1, 1, 1);
+
+            //Act i assert
+            p.ToString("invalid_format");
+        }
+
+        //Test dka metody Parse, gdzie podajemy niepoprawne jednostki
+        [TestMethod]
+        [ExpectedException(typeof(FormatException))]
+        public void Parse_NiepoprawneJednostki_WyrzucaWyjątek()
+        {
+            //Arrange
+            string invalidInput = "2.5 km × 9.3 km × 1.0 km"; // Nieprawidłowe jednostki
+
+            //Act
+            Pudelko.Parse(invalidInput);
+        }
+
+        //Test dla metody Parse, gdzie podajemy niepoprawny format
+        [TestMethod]
+        [ExpectedException(typeof(FormatException))]
+        public void Parse_NieprawidłowyFormat_WyrzucaWyjątek()
+        {
+            //Arrange
+            string invalidInput = "2.5×9.3×1.0"; // Brak wymaganych separatorów i jednostek
+
+            //Act
+            Pudelko.Parse(invalidInput);
+        }
+
+        #endregion
+
+        #region Testy dla Equals =====================
+
+        //Testy dla Equals, gdzie porównujemy dwa pudełka o takich samych wymiarach
+        [TestMethod]
+        public void Equals_TakieSameWymiary_ZwracaPrawde()
+        {
+            //Arrange
+            var p1 = new Pudelko(1.0, 2.0, 3.0);
+            var p2 = new Pudelko(3.0, 1.0, 2.0); // Te same wymiary, ale w innej kolejności
+
+            //Act i Assert
+            Assert.IsTrue(p1.Equals(p2));
+        }
+
+        //Testy dla Equals, gdzie porównujemy dwa pudełka o różnych wymiarach
+        [TestMethod]
+        public void Equals_RóżneWymiary_ZwracaFałsz()
+        {
+            //Arrange
+            var p1 = new Pudelko(1.0, 2.0, 3.0);
+            var p2 = new Pudelko(4.0, 5.0, 6.0);
+
+            //Act & Assert
+            Assert.IsFalse(p1.Equals(p2));
+        }
+
+        #endregion
+
+        #region Testy dla GetHashCode =====================
+
+        //Testy dla GetHashCode, gdzie porównujemy dwa pudełka o takich samych wymiarach
+        [TestMethod]
+        public void GetHashCode_TeSameWymiary_ZwracaTenSamHash()
+        {
+            //Arrange
+            var p1 = new Pudelko(1.0, 2.0, 3.0);
+            var p2 = new Pudelko(3.0, 1.0, 2.0); // Te same wymiary, ale w innej kolejności
+
+            //Act
+            int hash1 = p1.GetHashCode();
+            int hash2 = p2.GetHashCode();
+
+            //Assert
+            Assert.AreEqual(hash1, hash2);
+        }
+
+        //Testy dla GetHashCode, gdzie porównujemy dwa pudełka o różnych wymiarach
+        [TestMethod]
+        public void GetHashCode_RóżneWymiary_ZwracaInnyHash()
+        {
+            //Arrange
+            var p1 = new Pudelko(1.0, 2.0, 3.0);
+            var p2 = new Pudelko(4.0, 5.0, 6.0);
+
+            //Act
+            int hash1 = p1.GetHashCode();
+            int hash2 = p2.GetHashCode();
+
+            //Assert
+            Assert.AreNotEqual(hash1, hash2);
+        }
+
+        #endregion
+
+        #region Testy dla operatorów == oraz != =====================
+
+        //Testy dla operatora ==, gdzie porównujemy dwa pudełka o takich samych wymiarach
+        [TestMethod]
+        public void OperatorEquals_ObydwaNull_ZwracaPrawdę()
+        {
+            //Arrange
+            Pudelko p1 = null;
+            Pudelko p2 = null;
+
+            //Act i Assert
+            Assert.IsTrue(p1 == p2);
+        }
+
+        //Testy dla operatora ==, gdzie porównujemy dwa pudełka o różnych wymiarach
+        [TestMethod]
+        public void OperatorEquals_JedenNull_ZwracaFałsz()
+        {
+            //Arrange
+            Pudelko p1 = new Pudelko(1, 2, 3);
+            Pudelko p2 = null;
+
+            //Act i Assert
+            Assert.IsFalse(p1 == p2);
+        }
+
+        //Testy dla operatora !=, gdzie porównujemy dwa pudełka o takich samych wymiarach
+        [TestMethod]
+        public void OperatorNotEquals_ObydwaNull_ZwracaFałsz()
+        {
+            //Arrange
+            Pudelko p1 = null;
+            Pudelko p2 = null;
+
+            //Act i Assert
+            Assert.IsFalse(p1 != p2);
+        }
+
+        #endregion
+
+        #region Testy dla Parse =====================
+
+        //Testy dla metody Parse, gdzie podajemy poprawny format
+        [TestMethod]
+        public void Parse_ValidInput_ZwracaPrawidłowePudełko()
+        {
+            // Arrange
+            string input = "2.500 m × 9.321 m × 0.100 m";
+
+            // Act
+            var p = Pudelko.Parse(input);
+
+            // Assert
+            Assert.AreEqual(2.5, p.A);
+            Assert.AreEqual(9.321, p.B);
+            Assert.AreEqual(0.1, p.C);
+        }
+
+        //Testy dla metody Parse, gdzie podajemy niepoprawny format - nieznaną jednostkę
+        [TestMethod]
+        [ExpectedException(typeof(FormatException))]
+        public void Parse_NieznanaJednostka_WyrzucaWyjątek()
+        {
+            // Arrange
+            string input = "2.5 dm × 9.3 dm × 1.0 dm"; // Nieznana jednostka "dm"
+
+            // Act
+            Pudelko.Parse(input);
+        }
+
+        #endregion
+
+        #region Testy dla ArgumentOutOfRangeException =====================
+
+        // Test dla wymiarów, które są niedodatnie (ujemne lub 0)
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void Constructor_NieprawidłowyWymiar_WyrzucaArgumentOutOfRangeException()
+        {
+            // Arrange & Act
+            var pudelko = new Pudelko(-1, 1, 1, UnitOfMeasure.meter);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void Constructor_WymiarZerowy_WyrzucaArgumentOutOfRangeException()
+        {
+            // Arrange & Act
+            var pudelko = new Pudelko(0, 1, 1, UnitOfMeasure.meter);
+        }
+
+        #endregion
+
+        #region Testy dla ArgumentOutOfRangeException dla nieprawidłowej jednostki =====================
+
+        // Test dla konstruktora, gdzie podajemy nieprawidłową jednostkę
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void Constructor_NieprawidłowaJednostka_WyrzucaArgumentOutOfRangeException()
+        {
+            // Arrange & Act
+            var pudelko = new Pudelko(1, 1, 1, (UnitOfMeasure)999); // Nieprawidłowa jednostka
+        }
+
+        #endregion
+
+        #region Testy dla FormatException =====================
+
+        // Test dla metody ToString z nieznanym formatem
+        [TestMethod]
+        [ExpectedException(typeof(FormatException))]
+        public void ToString_NieprawidłowyFormat_WyrzucaFormatException()
+        {
+            // Arrange
+            var pudelko = new Pudelko(1, 1, 1);
+
+            // Act
+            pudelko.ToString("invalid");
+        }
+
+        // Test dla metody Parse z nieznaną jednostką miary
+        [TestMethod]
+        [ExpectedException(typeof(FormatException))]
+        public void Parse_NieprawidłowaJednostka_WyrzucaFormatException()
+        {
+            // Arrange
+            string input = "2.5 dm × 9.3 dm × 1.0 dm"; // Nieznana jednostka "dm"
+
+            // Act
+            Pudelko.Parse(input);
+        }
+
+        #endregion
+
+        #region Testy dla Equals =====================
+
+        // Test dla metody Equals, gdzie porównujemy obiekt null
+        [TestMethod]
+        public void Equals_ObjektNull_ZwracaFałsz()
+        {
+            // Arrange
+            var pudelko = new Pudelko(1, 1, 1);
+
+            // Act
+            bool result = pudelko.Equals(null);
+
+            // Assert
+            Assert.IsFalse(result);
+        }
+
+        // Test dla metody Equals, gdzie porównujemy obiekt innego typu
+        [TestMethod]
+        public void Equals_RóżnyTypObiektów_ZwracaFałsz()
+        {
+            // Arrange
+            var pudelko = new Pudelko(1, 1, 1);
+
+            // Act
+            bool result = pudelko.Equals("Not a Pudelko");
+
+            // Assert
+            Assert.IsFalse(result);
+        }
+
+        // Test dla metody Equals, gdzie porównujemy dwa pudełka o takich samych wymiarach
+        [TestMethod]
+        public void Equals_IdentycznyWymiar_ZwracaPrawdę()
+        {
+            // Arrange
+            var pudelko1 = new Pudelko(1, 1, 1);
+            var pudelko2 = new Pudelko(1, 1, 1);
+
+            // Act
+            bool result = pudelko1.Equals(pudelko2);
+
+            // Assert
+            Assert.IsTrue(result);
+        }
+
+        #endregion
+
+        #region Testy dla Parse z jednostkami =====================
+
+        // Test dla metody Parse z jednostką "cm"
+        [TestMethod]
+        public void Parse_JednostkaCentymetry_SprasowaneWPełni()
+        {
+            // Arrange
+            string input = "2.5 cm × 9.3 cm × 1.0 cm";
+
+            // Act
+            var pudelko = Pudelko.Parse(input);
+
+            // Assert
+            Assert.AreEqual(0.025, pudelko.A);
+            Assert.AreEqual(0.093, pudelko.B);
+            Assert.AreEqual(0.01, pudelko.C);
+        }
+
+        // Test dla metody Parse z jednostką "mm"
+        [TestMethod]
+        public void Parse_JednostkaMilimetry_SparsowaneWPełni()
+        {
+            // Arrange
+            string input = "25 mm × 93 mm × 10 mm";
+
+            // Act
+            var pudelko = Pudelko.Parse(input);
+
+            // Assert
+            Assert.AreEqual(0.025, pudelko.A);
+            Assert.AreEqual(0.093, pudelko.B);
+            Assert.AreEqual(0.01, pudelko.C);
+        }
+
+        #endregion
+
     }
 }
